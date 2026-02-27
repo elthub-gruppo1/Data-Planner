@@ -71,11 +71,22 @@ export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
   task: one(tasks, { fields: [timeEntries.taskId], references: [tasks.id] }),
 }));
 
+export const absences = pgTable("absences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: text("date").notNull(),
+});
+
+export const absencesRelations = relations(absences, ({ one }) => ({
+  user: one(users, { fields: [absences.userId], references: [users.id] }),
+}));
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true });
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({ id: true });
+export const insertAbsenceSchema = createInsertSchema(absences).omit({ id: true });
 
 export const loginSchema = z.object({
   username: z.string().min(1),
@@ -93,3 +104,5 @@ export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
+export type Absence = typeof absences.$inferSelect;
+export type InsertAbsence = z.infer<typeof insertAbsenceSchema>;

@@ -4,10 +4,11 @@ import {
   type Project, type InsertProject,
   type Task, type InsertTask,
   type TimeEntry, type InsertTimeEntry,
-  users, clients, projects, tasks, timeEntries,
+  type Absence, type InsertAbsence,
+  users, clients, projects, tasks, timeEntries, absences,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   getUsers(): Promise<User[]>;
@@ -41,6 +42,11 @@ export interface IStorage {
   createTimeEntry(entry: InsertTimeEntry): Promise<TimeEntry>;
   updateTimeEntry(id: string, entry: Partial<InsertTimeEntry>): Promise<TimeEntry | undefined>;
   deleteTimeEntry(id: string): Promise<void>;
+
+  getAbsences(): Promise<Absence[]>;
+  getAbsence(userId: string, date: string): Promise<Absence | undefined>;
+  createAbsence(absence: InsertAbsence): Promise<Absence>;
+  deleteAbsence(userId: string, date: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -65,6 +71,7 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteUser(id: string): Promise<void> {
     await db.delete(timeEntries).where(eq(timeEntries.userId, id));
+    await db.delete(absences).where(eq(absences.userId, id));
     await db.delete(users).where(eq(users.id, id));
   }
 
@@ -155,6 +162,21 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteTimeEntry(id: string): Promise<void> {
     await db.delete(timeEntries).where(eq(timeEntries.id, id));
+  }
+
+  async getAbsences(): Promise<Absence[]> {
+    return db.select().from(absences);
+  }
+  async getAbsence(userId: string, date: string): Promise<Absence | undefined> {
+    const [absence] = await db.select().from(absences).where(and(eq(absences.userId, userId), eq(absences.date, date)));
+    return absence || undefined;
+  }
+  async createAbsence(absence: InsertAbsence): Promise<Absence> {
+    const [created] = await db.insert(absences).values(absence).returning();
+    return created;
+  }
+  async deleteAbsence(userId: string, date: string): Promise<void> {
+    await db.delete(absences).where(and(eq(absences.userId, userId), eq(absences.date, date)));
   }
 }
 

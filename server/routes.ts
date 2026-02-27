@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertClientSchema, insertProjectSchema, insertTaskSchema, insertTimeEntrySchema, loginSchema } from "@shared/schema";
+import { insertUserSchema, insertClientSchema, insertProjectSchema, insertTaskSchema, insertTimeEntrySchema, insertAbsenceSchema, loginSchema } from "@shared/schema";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session.currentUserId) {
@@ -195,6 +195,22 @@ export async function registerRoutes(
   app.post("/api/time-entries", requireAuth, async (req, res) => {
     const parsed = insertTimeEntrySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const absence = await storage.getAbsence(parsed.data.userId, parsed.data.date);
+    if (absence) {
+      return res.status(400).json({ error: "L'utente è assente in questa data. Impossibile registrare ore." });
+    }
+
+    const user = await storage.getUser(parsed.data.userId);
+    if (user) {
+      if (parsed.data.hours <= 0) {
+        return res.status(400).json({ error: "Le ore devono essere maggiori di 0" });
+      }
+      if (parsed.data.hours > user.dailyHours) {
+        return res.status(400).json({ error: `Le ore non possono superare ${user.dailyHours}h (ore giornaliere dell'utente)` });
+      }
+    }
+
     const entry = await storage.createTimeEntry(parsed.data);
     res.status(201).json(entry);
   });
@@ -202,6 +218,29 @@ export async function registerRoutes(
   app.patch("/api/time-entries/:id", requireAuth, async (req, res) => {
     const parsed = insertTimeEntrySchema.partial().safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const existing = await storage.getTimeEntry(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Time entry not found" });
+
+    const effectiveUserId = parsed.data.userId || existing.userId;
+    const effectiveDate = parsed.data.date || existing.date;
+    const effectiveHours = parsed.data.hours !== undefined ? parsed.data.hours : existing.hours;
+
+    const absence = await storage.getAbsence(effectiveUserId, effectiveDate);
+    if (absence) {
+      return res.status(400).json({ error: "L'utente è assente in questa data. Impossibile registrare ore." });
+    }
+
+    const user = await storage.getUser(effectiveUserId);
+    if (user) {
+      if (effectiveHours <= 0) {
+        return res.status(400).json({ error: "Le ore devono essere maggiori di 0" });
+      }
+      if (effectiveHours > user.dailyHours) {
+        return res.status(400).json({ error: `Le ore non possono superare ${user.dailyHours}h (ore giornaliere dell'utente)` });
+      }
+    }
+
     const entry = await storage.updateTimeEntry(req.params.id, parsed.data);
     if (!entry) return res.status(404).json({ error: "Time entry not found" });
     res.json(entry);
@@ -209,6 +248,29 @@ export async function registerRoutes(
 
   app.delete("/api/time-entries/:id", requireAuth, async (req, res) => {
     await storage.deleteTimeEntry(req.params.id);
+    res.status(204).end();
+  });
+
+  app.get("/api/absences", requireAuth, async (_req, res) => {
+    const all = await storage.getAbsences();
+    res.json(all);
+  });
+
+  app.post("/api/absences", requireAuth, async (req, res) => {
+    const parsed = insertAbsenceSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const existing = await storage.getAbsence(parsed.data.userId, parsed.data.date);
+    if (existing) {
+      return res.status(400).json({ error: "Assenza già registrata per questa data" });
+    }
+
+    const absence = await storage.createAbsence(parsed.data);
+    res.status(201).json(absence);
+  });
+
+  app.delete("/api/absences/:userId/:date", requireAuth, async (req, res) => {
+    await storage.deleteAbsence(req.params.userId, req.params.date);
     res.status(204).end();
   });
 

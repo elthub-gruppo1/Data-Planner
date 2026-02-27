@@ -31,6 +31,7 @@ Applicazione web full-stack per la gestione di progetti e il tracciamento delle 
 - **Project**: id, name, clientId (FK -> Client), notes
 - **Task**: id, projectId (FK -> Project), name, startDate, endDate, plannedHours, assignedUserIds[], note
 - **TimeEntry**: id, userId (FK -> User), date, projectId (FK -> Project), taskId (FK -> Task), hours, note
+- **Absence**: id, userId (FK -> User), date (unique per user+date)
 
 ## Key Files
 - `shared/schema.ts` - Drizzle schema + Zod validation + TypeScript types
@@ -53,6 +54,13 @@ All prefixed with `/api/`:
 - GET/POST `/projects`, GET/PATCH/DELETE `/projects/:id` (auth required)
 - GET/POST `/tasks`, GET/PATCH/DELETE `/tasks/:id` (auth required)
 - GET/POST `/time-entries`, GET/PATCH/DELETE `/time-entries/:id` (auth required)
+- GET/POST `/absences`, DELETE `/absences/:userId/:date` (auth required)
+
+## Business Rules
+- **Time Entry Validation**: hours must be > 0 and ≤ user.dailyHours (server-side enforced)
+- **Absence Blocking**: if a user has an absence record for a date, time entries cannot be created for that date
+- **Rendicontazione Giornaliera**: time entries page is a daily view with date picker, day navigation, absence toggle, daily totals
+- **Cascade Deletes**: deleteUser→timeEntries+absences; deleteProject→tasks+timeEntries; deleteClient→projects; deleteTask→timeEntries
 
 ## Running
 `npm run dev` starts Express + Vite dev server on port 5000
