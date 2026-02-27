@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   surname: text("surname").notNull(),
   email: text("email").notNull().unique(),
+  password: text("password").notNull().default("changeme"),
   dailyHours: real("daily_hours").notNull().default(8),
 });
 
@@ -75,8 +76,14 @@ export const insertProjectSchema = createInsertSchema(projects).omit({ id: true 
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true });
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({ id: true });
 
+export const loginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type LoginData = z.infer<typeof loginSchema>;
 export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Project = typeof projects.$inferSelect;

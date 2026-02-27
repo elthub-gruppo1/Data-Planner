@@ -1,6 +1,4 @@
 import { storage } from "./storage";
-import { db } from "./db";
-import { users, clients } from "@shared/schema";
 
 export async function seedDatabase() {
   const existingUsers = await storage.getUsers();
@@ -8,11 +6,19 @@ export async function seedDatabase() {
 
   console.log("Seeding database...");
 
+  const adminUser = await storage.createUser({
+    name: "Admin",
+    surname: "System",
+    email: "admin",
+    password: "admin",
+    dailyHours: 8,
+  });
+
   const createdUsers = await Promise.all([
-    storage.createUser({ name: "Marco", surname: "Bianchi", email: "marco.bianchi@xeel.it", dailyHours: 8 }),
-    storage.createUser({ name: "Laura", surname: "Rossi", email: "laura.rossi@xeel.it", dailyHours: 8 }),
-    storage.createUser({ name: "Alessandro", surname: "Verdi", email: "alessandro.verdi@xeel.it", dailyHours: 6 }),
-    storage.createUser({ name: "Sofia", surname: "Colombo", email: "sofia.colombo@xeel.it", dailyHours: 8 }),
+    storage.createUser({ name: "Marco", surname: "Bianchi", email: "marco.bianchi@xeel.it", password: "marco123", dailyHours: 8 }),
+    storage.createUser({ name: "Laura", surname: "Rossi", email: "laura.rossi@xeel.it", password: "laura123", dailyHours: 8 }),
+    storage.createUser({ name: "Alessandro", surname: "Verdi", email: "alessandro.verdi@xeel.it", password: "alessandro123", dailyHours: 6 }),
+    storage.createUser({ name: "Sofia", surname: "Colombo", email: "sofia.colombo@xeel.it", password: "sofia123", dailyHours: 8 }),
   ]);
 
   const createdClients = await Promise.all([
@@ -50,5 +56,5 @@ export async function seedDatabase() {
     storage.createTimeEntry({ userId: createdUsers[1].id, date: "2026-02-27", projectId: createdProjects[1].id, taskId: createdTasks[3].id, hours: 6, note: "Screen di login e dashboard" }),
   ]);
 
-  console.log("Database seeded successfully!");
+  console.log("Database seeded successfully! Admin user: admin/admin");
 }

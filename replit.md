@@ -16,8 +16,17 @@ Applicazione web full-stack per la gestione di progetti e il tracciamento delle 
 - **Dark mode default**: HTML starts with `class="dark"`, localStorage toggle via ThemeToggle component
 - **Custom CSS**: Styled scrollbars, selection highlight, glow effects on hover
 
+## Authentication
+- **Login "ponte"**: Simple session-based auth via express-session + connect-pg-simple
+- Default credentials: admin / admin (email="admin", password="admin")
+- Session stored in PostgreSQL via `connect-pg-simple`
+- Auth routes: POST `/api/auth/login`, POST `/api/auth/logout`, GET `/api/auth/me`
+- All `/api/*` routes (except auth) protected by `requireAuth` middleware
+- Frontend shows login page when unauthenticated; header shows "Loggato come: Name Surname" + logout button
+- Password field stored as plaintext (ponte/bridge login, not production-grade)
+
 ## Data Model
-- **User**: id, name, surname, email, dailyHours
+- **User**: id, name, surname, email, password, dailyHours
 - **Client**: id, name, vat (partita IVA)
 - **Project**: id, name, clientId (FK -> Client), notes
 - **Task**: id, projectId (FK -> Project), name, startDate, endDate, plannedHours, assignedUserIds[]
@@ -37,11 +46,12 @@ Applicazione web full-stack per la gestione di progetti e il tracciamento delle 
 
 ## API Endpoints
 All prefixed with `/api/`:
-- GET/POST `/users`, GET/PATCH/DELETE `/users/:id`
-- GET/POST `/clients`, GET/PATCH/DELETE `/clients/:id`
-- GET/POST `/projects`, GET/PATCH/DELETE `/projects/:id`
-- GET/POST `/tasks`, GET/PATCH/DELETE `/tasks/:id`
-- GET/POST `/time-entries`, GET/PATCH/DELETE `/time-entries/:id`
+- POST `/auth/login`, POST `/auth/logout`, GET `/auth/me` (no auth required)
+- GET/POST `/users`, GET/PATCH/DELETE `/users/:id` (auth required)
+- GET/POST `/clients`, GET/PATCH/DELETE `/clients/:id` (auth required)
+- GET/POST `/projects`, GET/PATCH/DELETE `/projects/:id` (auth required)
+- GET/POST `/tasks`, GET/PATCH/DELETE `/tasks/:id` (auth required)
+- GET/POST `/time-entries`, GET/PATCH/DELETE `/time-entries/:id` (auth required)
 
 ## Running
 `npm run dev` starts Express + Vite dev server on port 5000
