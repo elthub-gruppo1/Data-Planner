@@ -64,6 +64,7 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
   async deleteUser(id: string): Promise<void> {
+    await db.delete(timeEntries).where(eq(timeEntries.userId, id));
     await db.delete(users).where(eq(users.id, id));
   }
 
@@ -83,6 +84,10 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
   async deleteClient(id: string): Promise<void> {
+    const clientProjects = await db.select({ id: projects.id }).from(projects).where(eq(projects.clientId, id));
+    for (const p of clientProjects) {
+      await this.deleteProject(p.id);
+    }
     await db.delete(clients).where(eq(clients.id, id));
   }
 
@@ -102,6 +107,11 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
   async deleteProject(id: string): Promise<void> {
+    const projectTasks = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.projectId, id));
+    for (const t of projectTasks) {
+      await this.deleteTask(t.id);
+    }
+    await db.delete(timeEntries).where(eq(timeEntries.projectId, id));
     await db.delete(projects).where(eq(projects.id, id));
   }
 
@@ -124,6 +134,7 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
   async deleteTask(id: string): Promise<void> {
+    await db.delete(timeEntries).where(eq(timeEntries.taskId, id));
     await db.delete(tasks).where(eq(tasks.id, id));
   }
 

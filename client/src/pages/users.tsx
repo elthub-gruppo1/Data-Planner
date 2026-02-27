@@ -54,6 +54,10 @@ export default function UsersPage() {
       toast({ title: "Utente eliminato" });
       setDeleteTarget(null);
     },
+    onError: (err: any) => {
+      toast({ title: "Errore durante l'eliminazione", description: err.message, variant: "destructive" });
+      setDeleteTarget(null);
+    },
   });
 
   function closeDialog() {
