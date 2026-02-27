@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import ClientsPage from "@/pages/clients";
 import ProjectsPage from "@/pages/projects";
+import ProjectDetailPage from "@/pages/project-detail";
 import TasksPage from "@/pages/tasks";
 import TimeEntriesPage from "@/pages/time-entries";
 import UsersPage from "@/pages/users";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/clients" component={ClientsPage} />
       <Route path="/projects" component={ProjectsPage} />
+      <Route path="/projects/:id">{(params) => <ProjectDetailPage params={params} />}</Route>
       <Route path="/tasks" component={TasksPage} />
       <Route path="/time-entries" component={TimeEntriesPage} />
       <Route path="/users" component={UsersPage} />

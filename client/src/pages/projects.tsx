@@ -9,19 +9,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, FolderKanban, Cpu, GitBranch } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderKanban, Cpu, GitBranch, Eye } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DialogDescription } from "@/components/ui/dialog";
 import { insertProjectSchema, type Project, type InsertProject, type Client } from "@shared/schema";
+import { useLocation } from "wouter";
 
 export default function ProjectsPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const { data: projects = [], isLoading } = useQuery<Project[]>({ queryKey: ["/api/projects"] });
   const { data: clients = [] } = useQuery<Client[]>({ queryKey: ["/api/clients"] });
   const [open, setOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const form = useForm<InsertProject>({
     resolver: zodResolver(insertProjectSchema),
@@ -52,6 +57,11 @@ export default function ProjectsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({ title: "Progetto eliminato" });
+      setDeleteTarget(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore durante l'eliminazione", description: err.message, variant: "destructive" });
+      setDeleteTarget(null);
     },
   });
 
@@ -97,6 +107,9 @@ export default function ProjectsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="font-mono tracking-wide">{editProject ? "// MODIFICA PROGETTO" : "// NUOVO PROGETTO"}</DialogTitle>
+              <DialogDescription className="text-xs font-mono tracking-wider">
+                {editProject ? "Modifica i dati del progetto" : "Inserisci i dati del nuovo progetto"}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -172,17 +185,20 @@ export default function ProjectsPage() {
                       <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 shrink-0">
                         <FolderKanban className="h-3 w-3 text-primary" />
                       </div>
-                      <CardTitle className="text-base truncate">{project.name}</CardTitle>
+                      <CardTitle className="text-base truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/projects/${project.id}`)} data-testid={`text-project-name-${project.id}`}>{project.name}</CardTitle>
                     </div>
                     {client && (
                       <Badge variant="secondary" className="mt-2 font-mono text-[10px] tracking-wider">{client.name}</Badge>
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <Button size="icon" variant="ghost" onClick={() => navigate(`/projects/${project.id}`)} data-testid={`button-detail-project-${project.id}`}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => openEdit(project)} data-testid={`button-edit-project-${project.id}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(project.id)} data-testid={`button-delete-project-${project.id}`}>
+                    <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(project)} data-testid={`button-delete-project-${project.id}`}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -197,6 +213,27 @@ export default function ProjectsPage() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono tracking-wide">// CONFERMA ELIMINAZIONE</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sei sicuro di voler eliminare il progetto <strong>{deleteTarget?.name}</strong>? Verranno eliminate anche tutte le attività e registrazioni ore associate.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

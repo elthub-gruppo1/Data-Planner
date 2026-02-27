@@ -29,7 +29,7 @@ Applicazione web full-stack per la gestione di progetti e il tracciamento delle 
 - **User**: id, name, surname, email, password, dailyHours
 - **Client**: id, name, vat (partita IVA)
 - **Project**: id, name, clientId (FK -> Client), notes
-- **Task**: id, projectId (FK -> Project), name, startDate, endDate, plannedHours, assignedUserIds[]
+- **Task**: id, projectId (FK -> Project), name, startDate, endDate, plannedHours, assignedUserIds[], note
 - **TimeEntry**: id, userId (FK -> User), date, projectId (FK -> Project), taskId (FK -> Task), hours, note
 
 ## Key Files
@@ -42,7 +42,8 @@ Applicazione web full-stack per la gestione di progetti e il tracciamento delle 
 - `client/src/index.css` - Futuristic theme CSS variables (light + dark mode)
 - `client/src/components/app-sidebar.tsx` - Navigation sidebar with robotic branding
 - `client/src/components/theme-toggle.tsx` - Dark/light mode toggle (defaults to dark)
-- `client/src/pages/` - Dashboard, Clients, Projects, Tasks, TimeEntries, Users pages
+- `client/src/pages/` - Dashboard, Clients, Projects, ProjectDetail, Tasks, TimeEntries, Users, Login pages
+- `client/src/pages/project-detail.tsx` - Project detail page with task CRUD (table, create/edit/delete with confirmation)
 
 ## API Endpoints
 All prefixed with `/api/`:

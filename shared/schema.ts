@@ -33,6 +33,7 @@ export const tasks = pgTable("tasks", {
   endDate: text("end_date"),
   plannedHours: real("planned_hours"),
   assignedUserIds: text("assigned_user_ids").array().default(sql`'{}'::text[]`),
+  note: text("note"),
 });
 
 export const timeEntries = pgTable("time_entries", {
