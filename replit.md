@@ -60,6 +60,7 @@ All prefixed with `/api/`:
 - **Time Entry Validation**: hours must be > 0 and ≤ user.dailyHours (server-side enforced)
 - **Absence Blocking**: if a user has an absence record for a date, time entries cannot be created for that date
 - **Rendicontazione Calendar**: time entries page has 3 views: Giorno (daily detail with CRUD + absence toggle), Settimana (weekly calendar grid with hours per day + quick add), Mese (monthly calendar grid with hours totals). Click any day cell to drill into daily view. Navigation arrows move by day/week/month. Period totals shown for each view.
+- **Dashboard KPIs**: Two prominent cards (Ore Previste = sum plannedHours, Ore Rendicontate = sum timeEntries.hours) with filter toggle: "Tutti i progetti" vs "Solo in corso". Bar chart shows ore rendicontate per progetto with planned hours marker line. Stat cards for Team, Clienti, Progetti, In Corso, Tasks, Completamento%. Recent log entries sidebar.
 - **Cascade Deletes**: deleteUser→timeEntries+absences; deleteProject→tasks+timeEntries; deleteClient→projects; deleteTask→timeEntries
 
 ## Running
