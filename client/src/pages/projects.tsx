@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, FolderKanban } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderKanban, Cpu, GitBranch } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -82,8 +82,11 @@ export default function ProjectsPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Progetti</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestisci i tuoi progetti</p>
+          <div className="flex items-center gap-2">
+            <GitBranch className="h-5 w-5 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Progetti</h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 font-mono tracking-wider uppercase">Project Management Module</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); else setOpen(true); }}>
           <DialogTrigger asChild>
@@ -93,20 +96,20 @@ export default function ProjectsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editProject ? "Modifica Progetto" : "Nuovo Progetto"}</DialogTitle>
+              <DialogTitle className="font-mono tracking-wide">{editProject ? "// MODIFICA PROGETTO" : "// NUOVO PROGETTO"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Nome</FormLabel>
                     <FormControl><Input {...field} placeholder="Nome progetto" data-testid="input-project-name" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="clientId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cliente</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Cliente</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-project-client">
@@ -124,7 +127,7 @@ export default function ProjectsPage() {
                 )} />
                 <FormField control={form.control} name="notes" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Note</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Note</FormLabel>
                     <FormControl>
                       <Textarea {...field} value={field.value || ""} placeholder="Note sul progetto..." data-testid="input-project-notes" />
                     </FormControl>
@@ -152,22 +155,27 @@ export default function ProjectsPage() {
       ) : projects.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <FolderKanban className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-muted-foreground text-sm">Nessun progetto ancora</p>
-            <p className="text-xs text-muted-foreground mt-1">Clicca su "Nuovo Progetto" per iniziare</p>
+            <Cpu className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
+            <p className="text-muted-foreground text-xs font-mono tracking-wider">NO PROJECTS INITIALIZED</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">Click "Nuovo Progetto" to create</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {projects.map(project => {
             const client = clientMap.get(project.clientId);
             return (
-              <Card key={project.id} data-testid={`card-project-${project.id}`}>
+              <Card key={project.id} className="hover-elevate" data-testid={`card-project-${project.id}`}>
                 <CardHeader className="flex flex-row items-start justify-between gap-1 space-y-0 pb-2">
                   <div className="min-w-0">
-                    <CardTitle className="text-base truncate">{project.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                        <FolderKanban className="h-3 w-3 text-primary" />
+                      </div>
+                      <CardTitle className="text-base truncate">{project.name}</CardTitle>
+                    </div>
                     {client && (
-                      <Badge variant="secondary" className="mt-1.5">{client.name}</Badge>
+                      <Badge variant="secondary" className="mt-2 font-mono text-[10px] tracking-wider">{client.name}</Badge>
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">

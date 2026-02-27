@@ -3,11 +3,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Briefcase } from "lucide-react";
+import { Plus, Pencil, Trash2, Briefcase, Building2, Cpu } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,8 +77,11 @@ export default function ClientsPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Clienti</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestisci i tuoi clienti</p>
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Clienti</h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 font-mono tracking-wider uppercase">Client Registry Module</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); else setOpen(true); }}>
           <DialogTrigger asChild>
@@ -89,21 +91,21 @@ export default function ClientsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editClient ? "Modifica Cliente" : "Nuovo Cliente"}</DialogTitle>
+              <DialogTitle className="font-mono tracking-wide">{editClient ? "// MODIFICA CLIENTE" : "// NUOVO CLIENTE"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Nome</FormLabel>
                     <FormControl><Input {...field} placeholder="Nome azienda" data-testid="input-client-name" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="vat" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Partita IVA</FormLabel>
-                    <FormControl><Input {...field} placeholder="IT12345678901" data-testid="input-client-vat" /></FormControl>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Partita IVA</FormLabel>
+                    <FormControl><Input {...field} placeholder="IT12345678901" data-testid="input-client-vat" className="font-mono" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -128,19 +130,24 @@ export default function ClientsPage() {
       ) : clients.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Briefcase className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-muted-foreground text-sm">Nessun cliente ancora</p>
-            <p className="text-xs text-muted-foreground mt-1">Clicca su "Nuovo Cliente" per iniziare</p>
+            <Cpu className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
+            <p className="text-muted-foreground text-xs font-mono tracking-wider">NO CLIENTS REGISTERED</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">Click "Nuovo Cliente" to add</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {clients.map(client => (
-            <Card key={client.id} data-testid={`card-client-${client.id}`}>
+            <Card key={client.id} className="hover-elevate" data-testid={`card-client-${client.id}`}>
               <CardHeader className="flex flex-row items-start justify-between gap-1 space-y-0 pb-2">
                 <div className="min-w-0">
-                  <CardTitle className="text-base truncate">{client.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">P.IVA: {client.vat}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                      <Briefcase className="h-3 w-3 text-primary" />
+                    </div>
+                    <CardTitle className="text-base truncate">{client.name}</CardTitle>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2 font-mono tracking-wider">P.IVA: {client.vat}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="icon" variant="ghost" onClick={() => openEdit(client)} data-testid={`button-edit-client-${client.id}`}>

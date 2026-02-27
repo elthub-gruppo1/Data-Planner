@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock, Cpu, Timer } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,9 +102,12 @@ export default function TimeEntriesPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Time Tracking</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {entries.length} registrazioni &middot; {totalHours.toFixed(1)} ore totali
+          <div className="flex items-center gap-2">
+            <Timer className="h-5 w-5 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Time Tracking</h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 font-mono tracking-wider uppercase">
+            {entries.length} LOG ENTRIES // {totalHours.toFixed(1)}H TOTAL
           </p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); else setOpen(true); }}>
@@ -115,13 +118,13 @@ export default function TimeEntriesPage() {
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{editEntry ? "Modifica Registrazione" : "Nuova Registrazione"}</DialogTitle>
+              <DialogTitle className="font-mono tracking-wide">{editEntry ? "// MODIFICA LOG" : "// NUOVO TIME LOG"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField control={form.control} name="userId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Utente</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Operatore</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-entry-user">
@@ -139,14 +142,14 @@ export default function TimeEntriesPage() {
                 )} />
                 <FormField control={form.control} name="date" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data</FormLabel>
-                    <FormControl><Input type="date" {...field} data-testid="input-entry-date" /></FormControl>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Data</FormLabel>
+                    <FormControl><Input type="date" {...field} data-testid="input-entry-date" className="font-mono" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="projectId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Progetto</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Progetto</FormLabel>
                     <Select onValueChange={(val) => { field.onChange(val); form.setValue("taskId", ""); }} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-entry-project">
@@ -165,7 +168,7 @@ export default function TimeEntriesPage() {
                 {filteredTasks.length > 0 && (
                   <FormField control={form.control} name="taskId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Attivit&agrave; (opzionale)</FormLabel>
+                      <FormLabel className="text-xs font-mono tracking-wider uppercase">Task (opzionale)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger data-testid="select-entry-task">
@@ -184,7 +187,7 @@ export default function TimeEntriesPage() {
                 )}
                 <FormField control={form.control} name="hours" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ore</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Ore</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -194,6 +197,7 @@ export default function TimeEntriesPage() {
                         value={field.value || ""}
                         onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                         data-testid="input-entry-hours"
+                        className="font-mono"
                       />
                     </FormControl>
                     <FormMessage />
@@ -201,9 +205,9 @@ export default function TimeEntriesPage() {
                 )} />
                 <FormField control={form.control} name="note" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Note (opzionale)</FormLabel>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Note (opzionale)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} value={field.value || ""} placeholder="Descrizione delle attivit\u00e0 svolte..." data-testid="input-entry-note" />
+                      <Textarea {...field} value={field.value || ""} placeholder="Descrizione attivit\u00e0 svolte..." data-testid="input-entry-note" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,32 +233,37 @@ export default function TimeEntriesPage() {
       ) : sorted.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Clock className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-muted-foreground text-sm">Nessuna registrazione ore</p>
-            <p className="text-xs text-muted-foreground mt-1">Clicca su "Nuova Registrazione" per iniziare</p>
+            <Cpu className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
+            <p className="text-muted-foreground text-xs font-mono tracking-wider">NO TIME LOGS RECORDED</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">Click "Nuova Registrazione" to start</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-2">
-          {sorted.map(entry => {
+          {sorted.map((entry, idx) => {
             const user = userMap.get(entry.userId);
             const project = projectMap.get(entry.projectId);
             const task = entry.taskId ? taskMap.get(entry.taskId) : null;
             return (
-              <Card key={entry.id} data-testid={`card-entry-${entry.id}`}>
+              <Card key={entry.id} className="hover-elevate" data-testid={`card-entry-${entry.id}`}>
                 <CardContent className="flex items-center justify-between gap-2 p-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{user ? `${user.name} ${user.surname}` : "Utente"}</span>
-                      <Badge variant="secondary" className="text-xs">{project?.name || "Progetto"}</Badge>
-                      {task && <Badge variant="outline" className="text-xs">{task.name}</Badge>}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                      <span className="text-[10px] font-mono font-bold text-primary">{String(idx + 1).padStart(2, "0")}</span>
                     </div>
-                    {entry.note && <p className="text-xs text-muted-foreground mt-1 truncate">{entry.note}</p>}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium">{user ? `${user.name} ${user.surname}` : "Utente"}</span>
+                        <Badge variant="secondary" className="text-[10px] font-mono tracking-wider">{project?.name || "Progetto"}</Badge>
+                        {task && <Badge variant="outline" className="text-[10px] font-mono">{task.name}</Badge>}
+                      </div>
+                      {entry.note && <p className="text-[11px] text-muted-foreground mt-1 truncate">{entry.note}</p>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right">
-                      <p className="text-sm font-semibold">{entry.hours}h</p>
-                      <p className="text-xs text-muted-foreground">{entry.date}</p>
+                      <p className="text-sm font-bold font-mono text-primary">{entry.hours}h</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">{entry.date}</p>
                     </div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(entry)} data-testid={`button-edit-entry-${entry.id}`}>
