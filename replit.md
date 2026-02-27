@@ -59,7 +59,7 @@ All prefixed with `/api/`:
 ## Business Rules
 - **Time Entry Validation**: hours must be > 0 and ≤ user.dailyHours (server-side enforced)
 - **Absence Blocking**: if a user has an absence record for a date, time entries cannot be created for that date
-- **Rendicontazione Giornaliera**: time entries page is a daily view with date picker, day navigation, absence toggle, daily totals
+- **Rendicontazione Calendar**: time entries page has 3 views: Giorno (daily detail with CRUD + absence toggle), Settimana (weekly calendar grid with hours per day + quick add), Mese (monthly calendar grid with hours totals). Click any day cell to drill into daily view. Navigation arrows move by day/week/month. Period totals shown for each view.
 - **Cascade Deletes**: deleteUser→timeEntries+absences; deleteProject→tasks+timeEntries; deleteClient→projects; deleteTask→timeEntries
 
 ## Running
