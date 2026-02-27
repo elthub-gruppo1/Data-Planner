@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { insertTaskSchema, type Task, type InsertTask, type Project, type Client, type User } from "@shared/schema";
 import { useLocation } from "wouter";
+import { computeProjectStats, statusColor } from "@/lib/project-utils";
 
 interface ProjectDetailProps {
   params: { id: string };
@@ -162,6 +163,40 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
           </div>
         </div>
       </div>
+
+      {(() => {
+        const stats = computeProjectStats(tasks);
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-[10px] font-mono tracking-wider uppercase text-muted-foreground">Data Inizio</p>
+                <p className="text-sm font-mono font-semibold mt-1" data-testid="text-project-start">{stats.startDate || "—"}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-[10px] font-mono tracking-wider uppercase text-muted-foreground">Data Fine</p>
+                <p className="text-sm font-mono font-semibold mt-1" data-testid="text-project-end">{stats.endDate || "—"}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-[10px] font-mono tracking-wider uppercase text-muted-foreground">Ore Previste</p>
+                <p className="text-sm font-mono font-semibold mt-1" data-testid="text-project-total-hours">{stats.totalPlannedHours}h</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-[10px] font-mono tracking-wider uppercase text-muted-foreground">Stato</p>
+                <Badge variant="outline" className={`mt-1 font-mono text-[11px] ${statusColor(stats.status)}`} data-testid="text-project-status">
+                  {stats.statusLabel}
+                </Badge>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
 
       {project.notes && (
         <Card>

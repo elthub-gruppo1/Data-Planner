@@ -16,14 +16,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DialogDescription } from "@/components/ui/dialog";
-import { insertProjectSchema, type Project, type InsertProject, type Client } from "@shared/schema";
+import { insertProjectSchema, type Project, type InsertProject, type Client, type Task } from "@shared/schema";
 import { useLocation } from "wouter";
+import { computeProjectStats, statusColor } from "@/lib/project-utils";
 
 export default function ProjectsPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { data: projects = [], isLoading } = useQuery<Project[]>({ queryKey: ["/api/projects"] });
   const { data: clients = [] } = useQuery<Client[]>({ queryKey: ["/api/clients"] });
+  const { data: allTasks = [] } = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
   const [open, setOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -177,6 +179,8 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {projects.map(project => {
             const client = clientMap.get(project.clientId);
+            const projectTasks = allTasks.filter(t => t.projectId === project.id);
+            const stats = computeProjectStats(projectTasks);
             return (
               <Card key={project.id} className="hover-elevate" data-testid={`card-project-${project.id}`}>
                 <CardHeader className="flex flex-row items-start justify-between gap-1 space-y-0 pb-2">
@@ -187,9 +191,14 @@ export default function ProjectsPage() {
                       </div>
                       <CardTitle className="text-base truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/projects/${project.id}`)} data-testid={`text-project-name-${project.id}`}>{project.name}</CardTitle>
                     </div>
-                    {client && (
-                      <Badge variant="secondary" className="mt-2 font-mono text-[10px] tracking-wider">{client.name}</Badge>
-                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {client && (
+                        <Badge variant="secondary" className="font-mono text-[10px] tracking-wider">{client.name}</Badge>
+                      )}
+                      <Badge variant="outline" className={`font-mono text-[10px] ${statusColor(stats.status)}`} data-testid={`text-project-status-${project.id}`}>
+                        {stats.statusLabel}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button size="icon" variant="ghost" onClick={() => navigate(`/projects/${project.id}`)} data-testid={`button-detail-project-${project.id}`}>
@@ -203,11 +212,19 @@ export default function ProjectsPage() {
                     </Button>
                   </div>
                 </CardHeader>
-                {project.notes && (
-                  <CardContent className="pt-0">
+                <CardContent className="pt-0 space-y-1">
+                  <div className="flex items-center gap-3 text-[11px] font-mono text-muted-foreground">
+                    {stats.startDate && <span>{stats.startDate}</span>}
+                    {stats.startDate && stats.endDate && <span className="text-primary/40">→</span>}
+                    {stats.endDate && <span>{stats.endDate}</span>}
+                    {stats.totalPlannedHours > 0 && (
+                      <span className="text-primary font-semibold">{stats.totalPlannedHours}h</span>
+                    )}
+                  </div>
+                  {project.notes && (
                     <p className="text-sm text-muted-foreground line-clamp-2">{project.notes}</p>
-                  </CardContent>
-                )}
+                  )}
+                </CardContent>
               </Card>
             );
           })}
