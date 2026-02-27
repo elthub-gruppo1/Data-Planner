@@ -81,6 +81,9 @@ export async function registerRoutes(
   });
 
   app.delete("/api/users/:id", requireAuth, async (req, res) => {
+    if (req.params.id === req.session.currentUserId) {
+      return res.status(403).json({ error: "Non puoi eliminare il tuo stesso utente" });
+    }
     await storage.deleteUser(req.params.id);
     res.status(204).end();
   });
