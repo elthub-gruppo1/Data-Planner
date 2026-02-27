@@ -1,13 +1,14 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Users, Cpu, UserCog } from "lucide-react";
+import { Plus, Pencil, Trash2, Cpu, UserCog } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,10 +20,11 @@ export default function UsersPage() {
   const { data: users = [], isLoading } = useQuery<User[]>({ queryKey: ["/api/users"] });
   const [open, setOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const form = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
-    defaultValues: { name: "", surname: "", email: "", dailyHours: 8 },
+    defaultValues: { name: "", surname: "", email: "", password: "changeme", dailyHours: 8 },
   });
 
   const createMutation = useMutation({
@@ -49,24 +51,26 @@ export default function UsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "Utente eliminato" });
+      setDeleteTarget(null);
     },
   });
 
   function closeDialog() {
     setOpen(false);
     setEditUser(null);
-    form.reset({ name: "", surname: "", email: "", dailyHours: 8 });
+    form.reset({ name: "", surname: "", email: "", password: "changeme", dailyHours: 8 });
   }
 
   function openEdit(user: User) {
     setEditUser(user);
-    form.reset({ name: user.name, surname: user.surname, email: user.email, dailyHours: user.dailyHours });
+    form.reset({ name: user.name, surname: user.surname, email: user.email, password: "changeme", dailyHours: user.dailyHours });
     setOpen(true);
   }
 
   function onSubmit(data: InsertUser) {
     if (editUser) {
-      updateMutation.mutate({ id: editUser.id, data });
+      const { password, ...rest } = data;
+      updateMutation.mutate({ id: editUser.id, data: rest });
     } else {
       createMutation.mutate(data);
     }
@@ -80,19 +84,22 @@ export default function UsersPage() {
         <div>
           <div className="flex items-center gap-2">
             <UserCog className="h-5 w-5 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Team</h1>
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Utenti</h1>
           </div>
-          <p className="text-xs text-muted-foreground mt-1 font-mono tracking-wider uppercase">Operator Management Module</p>
+          <p className="text-xs text-muted-foreground mt-1 font-mono tracking-wider uppercase">Gestione Operatori</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); else setOpen(true); }}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-user">
-              <Plus className="h-4 w-4 mr-2" /> Nuovo Operatore
+              <Plus className="h-4 w-4 mr-2" /> Nuovo
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-mono tracking-wide">{editUser ? "// MODIFICA OPERATORE" : "// NUOVO OPERATORE"}</DialogTitle>
+              <DialogTitle className="font-mono tracking-wide">{editUser ? "// MODIFICA UTENTE" : "// NUOVO UTENTE"}</DialogTitle>
+              <DialogDescription className="text-xs font-mono tracking-wider">
+                {editUser ? "Modifica i dati dell'utente" : "Inserisci i dati del nuovo utente"}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -114,8 +121,8 @@ export default function UsersPage() {
                 </div>
                 <FormField control={form.control} name="email" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Email</FormLabel>
-                    <FormControl><Input type="email" {...field} placeholder="mario@email.com" data-testid="input-user-email" className="font-mono" /></FormControl>
+                    <FormLabel className="text-xs font-mono tracking-wider uppercase">Email / Username</FormLabel>
+                    <FormControl><Input {...field} placeholder="mario@email.com" data-testid="input-user-email" className="font-mono" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -139,7 +146,7 @@ export default function UsersPage() {
                   </FormItem>
                 )} />
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="secondary" onClick={closeDialog}>Annulla</Button>
+                  <Button type="button" variant="secondary" onClick={closeDialog} data-testid="button-cancel-user">Annulla</Button>
                   <Button type="submit" disabled={isPending} data-testid="button-submit-user">
                     {isPending ? "Salvataggio..." : editUser ? "Aggiorna" : "Crea"}
                   </Button>
@@ -151,49 +158,79 @@ export default function UsersPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-16 w-full" /></CardContent></Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+          </CardContent>
+        </Card>
       ) : users.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Cpu className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
-            <p className="text-muted-foreground text-xs font-mono tracking-wider">NO OPERATORS REGISTERED</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">Click "Nuovo Operatore" to add</p>
+            <p className="text-muted-foreground text-xs font-mono tracking-wider">NESSUN UTENTE REGISTRATO</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">Clicca "Nuovo" per aggiungere</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {users.map(user => (
-            <Card key={user.id} className="hover-elevate" data-testid={`card-user-${user.id}`}>
-              <CardHeader className="flex flex-row items-start justify-between gap-1 space-y-0 pb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="border border-primary/20">
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-mono font-bold">
-                      {user.name[0]}{user.surname[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <CardTitle className="text-base truncate">{user.name} {user.surname}</CardTitle>
-                    <p className="text-[11px] text-muted-foreground truncate font-mono">{user.email}</p>
-                    <p className="text-[10px] text-primary font-mono font-semibold mt-0.5">{user.dailyHours}h/day</p>
-                  </div>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(user)} data-testid={`button-edit-user-${user.id}`}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(user.id)} data-testid={`button-delete-user-${user.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase">#</TableHead>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase">Nome</TableHead>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase">Cognome</TableHead>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase">Email / Username</TableHead>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase text-right">Ore/Giorno</TableHead>
+                  <TableHead className="font-mono text-[10px] tracking-wider uppercase text-right">Azioni</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user, idx) => (
+                  <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{String(idx + 1).padStart(2, "0")}</TableCell>
+                    <TableCell data-testid={`text-user-name-${user.id}`}>{user.name}</TableCell>
+                    <TableCell data-testid={`text-user-surname-${user.id}`}>{user.surname}</TableCell>
+                    <TableCell className="font-mono text-sm" data-testid={`text-user-email-${user.id}`}>{user.email}</TableCell>
+                    <TableCell className="text-right font-mono text-sm" data-testid={`text-user-hours-${user.id}`}>{user.dailyHours}h</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(user)} data-testid={`button-edit-user-${user.id}`}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(user)} data-testid={`button-delete-user-${user.id}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono tracking-wide">// CONFERMA ELIMINAZIONE</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sei sicuro di voler eliminare l'utente <strong>{deleteTarget?.name} {deleteTarget?.surname}</strong>? Questa azione non può essere annullata.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
